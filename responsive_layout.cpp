@@ -30,13 +30,21 @@ void ResponsiveLayout::setGeometry(const QRect &r /* our layout should always fi
 
     // calculate the responsive top line and search line
     const int topH    = (mode == Compact) ? ((H/10 > 44) ? H/10 : 44) : (H/10);
+    const int crumbH  = (mode == Compact) ? ((H/20 > 28) ? H/20 : 28) : (H/18);
     const int searchH = (mode == Compact) ? ((H/12 > 40) ? H/12 : 40) : (H/12);
+    const int filterH = (mode == Compact) ? ((H/14 > 32) ? H/14 : 32) : (H/14);
+    const int summaryH = (mode == Compact) ? ((H/16 > 30) ? H/16 : 30) : (H/16);
 
-    // devide the region to topBar,searchBar,content
+    // devide the region to topBar, breadcrumbs, searchBar, filterBar, content
     const QRect topBar   (safe.x(), safe.y(), safe.width(), topH);
-    const QRect searchBar(safe.x(), topBar.bottom() + gap, safe.width(), searchH);
-    QRect content(safe.x(), searchBar.bottom() + gap, safe.width(),
-                  safe.bottom() - (searchBar.bottom() + gap));
+    const QRect crumbBar (safe.x(), topBar.bottom() + gap/2, safe.width(), crumbH);
+    const QRect searchBar(safe.x(), crumbBar.bottom() + gap, safe.width(), searchH);
+    const QRect filterBar(safe.x(), searchBar.bottom() + gap, safe.width(), filterH);
+    const QRect summaryBar(safe.x(), filterBar.bottom() + gap, safe.width(), summaryH);
+    const QRect rcBreadcrumb = crumbBar.adjusted(gap/2, 0, -gap/2, 0);
+    const QRect rcSummary = summaryBar.adjusted(gap/2, 0, -gap/2, 0);
+    QRect content(safe.x(), summaryBar.bottom() + gap, safe.width(),
+                  safe.bottom() - (summaryBar.bottom() + gap));
 
     // place the left part: kHomeLink | kNavTabs | (Landscape) kPromoBanner
     int leftX  = topBar.x();
@@ -46,6 +54,9 @@ void ResponsiveLayout::setGeometry(const QRect &r /* our layout should always fi
     const int homeW  = (safe.width()/10 > 80) ? (safe.width()/10) : 80;
     const int navW   = (safe.width()/4  > 140)? (safe.width()/4 ) : 140;
     const int promoW = (safe.width()/6  > 120)? (safe.width()/6 ) : 120;
+    const int profileW = (safe.width()/18 > 70) ? (safe.width()/18) : 70;
+    const int wishlistW = (safe.width()/18 > 70) ? (safe.width()/18) : 70;
+    const int noticeW   = (safe.width()/20 > 60) ? (safe.width()/20) : 60;
 
     QRect rcHome (leftX, leftY, homeW, leftH);
     leftX += homeW + gap;
@@ -66,40 +77,78 @@ void ResponsiveLayout::setGeometry(const QRect &r /* our layout should always fi
     QRect rcBasket(rightX - basketW, rightY, basketW, rightH);
     rightX -= basketW + gap;
 
+    QRect rcNotice(rightX - noticeW, rightY, noticeW, rightH);
+    rightX -= noticeW + gap;
+
+    QRect rcWishlist(rightX - wishlistW, rightY, wishlistW, rightH);
+    rightX -= wishlistW + gap;
+
+    QRect rcProfile(rightX - profileW, rightY, profileW, rightH);
+    rightX -= profileW + gap;
+
     QRect rcSign  (rightX - signW,   rightY, signW,   rightH);
     rightX -= signW   + gap;
 
     QRect rcHelp  (rightX - helpW,   rightY, helpW,   rightH);
 
     // place the search bar：kSearchText | kSearchOptions | kSearchButton
-    QRect rcSText, rcSOpt, rcSBtn;
+    QRect rcSText, rcSOpt, rcSBtn, rcSort, rcView;
     {
         int x = searchBar.x(), y = searchBar.y(), w = searchBar.width(), h = searchBar.height();
         if (mode == Landscape) {
-            const int btnW = (w/8  > 90) ? (w/8) : 90;
-            const int optW = (w/6  > 120)? (w/6) : 120;
-            const int txtW = w - btnW - optW - 2*gap;
+            const int btnW  = (w/8  > 90) ? (w/8) : 90;
+            const int optW  = (w/7  > 110)? (w/7) : 110;
+            const int sortW = (w/8  > 100)? (w/8) : 100;
+            const int viewW = (w/10 > 80) ? (w/10) : 80;
+            const int txtW = w - btnW - optW - sortW - viewW - 4*gap;
             if (txtW > 0) {
                 rcSText = QRect(x, y, txtW, h);
                 rcSOpt  = QRect(x + txtW + gap, y, optW, h);
-                rcSBtn  = QRect(x + txtW + gap + optW + gap, y, btnW, h);
+                rcSort  = QRect(rcSOpt.right() + gap, y, sortW, h);
+                rcView  = QRect(rcSort.right() + gap, y, viewW, h);
+                rcSBtn  = QRect(rcView.right() + gap, y, btnW, h);
             }
         } else if (mode == Portrait) {
             const int btnW = (w/6  > 90) ? (w/6) : 90;
             const int txtW = w - btnW - gap;
             rcSText = QRect(x, y, txtW, h);
             rcSBtn  = QRect(x + txtW + gap, y, btnW, h);
-
-            //the option move to next line and place the content part
-            const int optH = (h/2 > 24) ? (h/2) : 24;
-            rcSOpt = QRect(safe.x(), searchBar.bottom() + gap/2, safe.width(), optH);
-            content.setTop(rcSOpt.bottom() + gap);
         } else { // Compact
             const int btnW = (w/5  > 88) ? (w/5) : 88;
             const int txtW = w - btnW - gap;
             rcSText = QRect(x, y, txtW, h);
             rcSBtn  = QRect(x + txtW + gap, y, btnW, h);
         }
+    }
+
+    // layout for filters and search refinements
+    QRect rcCategory, rcPrice, rcRating;
+    QRect rcOptRow = filterBar;
+    QRect rcFilterRow = filterBar;
+    rcOptRow.setHeight(filterBar.height()/2);
+    rcFilterRow.setY(rcOptRow.bottom());
+    rcFilterRow.setHeight(filterBar.height() - rcOptRow.height());
+
+    if (mode != Landscape) {
+        const int optW = (rcOptRow.width()/3 > 100) ? (rcOptRow.width()/3) : 100;
+        const int sortW = (rcOptRow.width()/4 > 96) ? (rcOptRow.width()/4) : 96;
+        const int viewW = (rcOptRow.width()/5 > 80) ? (rcOptRow.width()/5) : 80;
+        int x = rcOptRow.x();
+        rcSOpt = QRect(x, rcOptRow.y(), optW, rcOptRow.height());
+        x += optW + gap;
+        rcSort = QRect(x, rcOptRow.y(), sortW, rcOptRow.height());
+        x += sortW + gap;
+        rcView = QRect(x, rcOptRow.y(), viewW, rcOptRow.height());
+    }
+
+    {
+        const int chipW = (rcFilterRow.width()/4 > 110) ? (rcFilterRow.width()/4) : 110;
+        int x = rcFilterRow.x();
+        rcCategory = QRect(x, rcFilterRow.y(), chipW, rcFilterRow.height());
+        x += chipW + gap;
+        rcPrice = QRect(x, rcFilterRow.y(), chipW, rcFilterRow.height());
+        x += chipW + gap;
+        rcRating = QRect(x, rcFilterRow.y(), chipW, rcFilterRow.height());
     }
 
     // calculate the results locations
@@ -149,8 +198,25 @@ void ResponsiveLayout::setGeometry(const QRect &r /* our layout should always fi
             else if (name == kSignIn) {
                 label->setGeometry(rcSign);
             }
+            else if (name == kProfile) {
+                if (mode != Compact) label->setGeometry(rcProfile);
+                else                  label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kWishlist) {
+                if (mode != Compact) label->setGeometry(rcWishlist);
+                else                  label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kNotification) {
+                if (mode != Compact) label->setGeometry(rcNotice);
+                else                  label->setGeometry(-1,-1,0,0);
+            }
             else if (name == kShoppingBasket) {
                 label->setGeometry(rcBasket);
+            }
+
+            // context
+            else if (name == kBreadcrumbs) {
+                label->setGeometry(rcBreadcrumb);
             }
 
             // palce searchBar
@@ -165,6 +231,33 @@ void ResponsiveLayout::setGeometry(const QRect &r /* our layout should always fi
             else if (name == kSearchButton) {
                 if (rcSBtn.width() > 0) label->setGeometry(rcSBtn);
                 else                    label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kSortSelector) {
+                if (rcSort.width() > 0) label->setGeometry(rcSort);
+                else                    label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kViewToggle) {
+                if (rcView.width() > 0) label->setGeometry(rcView);
+                else                    label->setGeometry(-1,-1,0,0);
+            }
+
+            // filters
+            else if (name == kCategoryFilter) {
+                if (rcCategory.width() > 0) label->setGeometry(rcCategory);
+                else                        label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kPriceFilter) {
+                if (rcPrice.width() > 0) label->setGeometry(rcPrice);
+                else                      label->setGeometry(-1,-1,0,0);
+            }
+            else if (name == kRatingFilter) {
+                if (rcRating.width() > 0) label->setGeometry(rcRating);
+                else                       label->setGeometry(-1,-1,0,0);
+            }
+
+            // summary bar
+            else if (name == kResultSummary) {
+                label->setGeometry(rcSummary);
             }
 
             // place the resuolt bar

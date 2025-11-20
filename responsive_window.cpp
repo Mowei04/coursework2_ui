@@ -27,14 +27,30 @@ void ResponsiveWindow::createWidgets() {
     rl->addWidget(new ResponsiveLabel(kHomeLink));
     rl->addWidget(new ResponsiveLabel(kNavTabs));
     rl->addWidget(new ResponsiveLabel(kSignIn));
+    rl->addWidget(new ResponsiveLabel(kProfile));
     rl->addWidget(new ResponsiveLabel(kShoppingBasket));
+    rl->addWidget(new ResponsiveLabel(kWishlist));
+    rl->addWidget(new ResponsiveLabel(kNotification));
     rl->addWidget(new ResponsiveLabel(kPromoBanner));
     rl->addWidget(new ResponsiveLabel(kHelp));
+
+    // breadcrumbs for quick context
+    rl->addWidget(new ResponsiveLabel(kBreadcrumbs));
 
     // searchBar
     rl->addWidget(new ResponsiveLabel(kSearchText));
     rl->addWidget(new ResponsiveLabel(kSearchButton));
     rl->addWidget(new ResponsiveLabel(kSearchOptions));
+    rl->addWidget(new ResponsiveLabel(kSortSelector));
+    rl->addWidget(new ResponsiveLabel(kViewToggle));
+
+    // filter ribbon
+    rl->addWidget(new ResponsiveLabel(kCategoryFilter));
+    rl->addWidget(new ResponsiveLabel(kPriceFilter));
+    rl->addWidget(new ResponsiveLabel(kRatingFilter));
+
+    // result overview
+    rl->addWidget(new ResponsiveLabel(kResultSummary));
 
     // results
     for (int i = 0; i < 17; i++){
